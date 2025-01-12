@@ -4,12 +4,14 @@ const redis = require("redis");
 const app = express();
 
 const redisPort = 6379
-const client = redis.createClient(redisPort);
+const client = redis.createClient();
+
+
+
+client.on('connect', () => console.log('Redis Client Connected'));
 
 //log error to the console if any occurs
-client.on("error", (err) => {
-    console.log(err);
-});
+client.on('error', (err) => console.log('Redis Client Connection Error', err));
 
 // app.get("/jobs", async (req, res) => {
 //     const searchTerm = req.query.search;
@@ -35,10 +37,11 @@ app.get("/jobs", (req, res) => {
                     message: "data retrieved from the cache"
                 });
             } else {
-                const jobs = await axios.get(`https://jobs.github.com/positions.json?search=${searchTerm}`);
-                client.setex(searchTerm, 600, JSON.stringify(jobs.data));
+                // const jobs = await axios.get(`https://jobs.github.com/positions.json?search=${searchTerm}`);
+                const jobs = await axios.get(`https://jsonplaceholder.typicode.com/posts`);
+                client.setex(searchTerm, 600, JSON.stringify(jobs));
                 res.status(200).send({
-                    jobs: jobs.data,
+                    jobs: jobs,
                     message: "cache miss"
                 });
             }
@@ -48,6 +51,6 @@ app.get("/jobs", (req, res) => {
     }
 });
 
-app.listen(process.env.PORT || 3000, () => {
+app.listen(process.env.PORT || 3090, () => {
     console.log("Node server started");
 });
